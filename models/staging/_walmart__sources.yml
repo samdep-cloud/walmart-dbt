@@ -1,0 +1,13 @@
+version: 2
+
+sources:
+  - name: raw 
+    database: WALMART
+    schema: RAW 
+    tables:
+      - name: department
+        description: "Weekly sales by store / department / data -- actual sales grain (source department.csv)"
+      - name: stores 
+        description: "Store attributes -- type and size of store (source stores.csv)"
+      - name: fact 
+        description: "Weekly conditions by store / date -- temperature, fuel, CPI, markdowns (source fact.csv)"
