@@ -7,36 +7,37 @@
 
 with joined as (
     select
-        dept.store_id,
-        dept.dept_id,
-        to_number(to_char(dept.sales_date, 'YYYYMMDD')) as date_id,
-        dept.weekly_sales,
-        fct.temperature,
-        fct.fuel_price,
-        fct.cpi,
-        fct.unemployment,
-        fct.markdown1, fct.markdown2, fct.markdown3, fct.markdown4, fct.markdown5
-    from {{ ref('stg_walmart__department') }} dept
-    left join {{ ref('stg_walmart__fact') }} fct
-        on  dept.store_id   = fct.store_id
-        and dept.sales_date = fct.weather_date
+        sales.store_id,
+        sales.dept_id,
+        sales.sales_date,                                             -- real DATE, carried forward
+        to_number(to_char(sales.sales_date, 'YYYYMMDD')) as date_id,  -- key for dim_date join
+        sales.weekly_sales,
+        feat.temperature,
+        feat.fuel_price,
+        feat.cpi,
+        feat.unemployment,
+        feat.markdown1, feat.markdown2, feat.markdown3, feat.markdown4, feat.markdown5
+    from {{ ref('stg_walmart__sales') }} sales
+    left join {{ ref('stg_walmart__features') }} feat
+        on  sales.store_id  = feat.store_id
+        and sales.sales_date = feat.record_date
 )
 
 select
     src.store_id,
     src.dept_id,
     src.date_id,
+    src.sales_date,                                    
     src.weekly_sales,
     src.temperature, src.fuel_price, src.cpi, src.unemployment,
     src.markdown1, src.markdown2, src.markdown3, src.markdown4, src.markdown5,
 
-    -- audit + version columns
     {% if is_incremental() %}
     coalesce(existing.insert_date, current_timestamp()) as insert_date,
     {% else %}
     current_timestamp() as insert_date,
     {% endif %}
-    current_timestamp()            as update_date,
+    current_timestamp() as update_date,
 
     {% if is_incremental() %}
     coalesce(existing.vrsn_start_date, current_timestamp()) as vrsn_start_date,

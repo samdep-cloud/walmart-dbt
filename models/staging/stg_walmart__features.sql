@@ -1,6 +1,6 @@
 select
     store        as store_id,
-    date         as weather_date,
+    date         as record_date,
     temperature,
     fuel_price,
     markdown1,
@@ -11,4 +11,4 @@ select
     cpi,
     unemployment,
     isholiday    as is_holiday
-from {{ source('raw', 'fact') }}
+from {{ source('raw', 'features') }}

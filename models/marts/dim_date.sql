@@ -6,14 +6,14 @@
 }}
 
 with all_dates as (
-    -- dates live in TWO source models; pull from both
-    select sales_date   as calendar_date, is_holiday from {{ ref('stg_walmart__department') }}
+    -- dates live in both the department (renamed: sales) and fact (renamed: features) tables - union and dedupe
+    select sales_date   as calendar_date, is_holiday from {{ ref('stg_walmart__sales') }}
     union all
-    select weather_date as calendar_date, is_holiday from {{ ref('stg_walmart__fact') }}
+    select record_date as calendar_date, is_holiday from {{ ref('stg_walmart__features') }}
 ),
 
 deduped as (
-    -- one row per date; if any row flags the week as a holiday, it's a holiday
+    -- one row per date; if any row flags the week as a holiday, it's considered a "holiday" week/period
     select
         calendar_date,
         max(case when is_holiday then 1 else 0 end) as holiday_flag
