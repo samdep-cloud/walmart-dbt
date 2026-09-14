@@ -4,4 +4,4 @@ select
   date          as sales_date,
   weekly_sales,
   isholiday     as is_holiday
-from {{ source ('raw', 'department') }}
+from {{ source ('raw', 'sales') }}

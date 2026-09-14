@@ -5,9 +5,11 @@ sources:
     database: WALMART
     schema: RAW 
     tables:
-      - name: department
+      - name: sales # renamed to sales to better fit the contents of the data
+        identifier: department # source table name 
         description: "Weekly sales by store / department / data -- actual sales grain (source department.csv)"
       - name: stores 
         description: "Store attributes -- type and size of store (source stores.csv)"
-      - name: fact 
+      - name: features
+        identifier: fact
         description: "Weekly conditions by store / date -- temperature, fuel, CPI, markdowns (source fact.csv)"
