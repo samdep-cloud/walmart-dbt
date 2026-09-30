@@ -1,15 +1,42 @@
-Welcome to your new dbt project!
+# Walmart: BI Analysis
 
-### Using the starter project
+This project models sales data in Snowflake using dbt and supports analysis in Python. CSV source files are staged in Amazon S3 and loaded into Snowflake, where dbt builds Type 1 dimensions, a sales fact with Type 2 history, and a current-version analytical table. Python retrieves the modeled data through the Snowflake Connector for Python, and matplotlib visualizations examine sales trends across stores, departments, and time. 
 
-Try running the following commands:
-- dbt run
-- dbt test
+## Data Flow
 
+CSV source files → Amazon S3 → Snowflake RAW tables → dbt staging → dimensions and sales history snapshot → fact and analytical tables → Python analysis
 
-### Resources:
-- Learn more about dbt [in the docs](https://docs.getdbt.com/docs/introduction)
-- Check out [Discourse](https://discourse.getdbt.com/) for commonly asked questions and answers
-- Join the [dbt community](https://getdbt.com/community) to learn from other analytics engineers
-- Find [dbt events](https://events.getdbt.com) near you
-- Check out [the blog](https://blog.getdbt.com/) for the latest news on dbt's development and best practices
+| Source File | Snowflake Raw Table | dbt Source | Grain |
+|---|---|---|---|
+| `department.csv` | `WALMART.RAW.DEPARTMENT` | `raw.sales` | Store, department, week |
+| `stores.csv` | `WALMART.RAW.STORES` | `raw.stores` | Store |
+| `fact.csv` | `WALMART.RAW.FACT` | `raw.features` | Store, week |
+
+The ingestion SQL defines the storage integration, external stage, file format, raw tables, and loading statements. The source configuration in `models/staging/_walmart__sources.yml` maps the raw tables to the dbt sources.
+
+## Models
+
+| Layer | Models | Purpose |
+|---|---|---|
+| Staging | `stg_walmart__sales`, `stg_walmart__stores`, `stg_walmart__features` | Standardize source field names |
+| Dimensions | `dim_store`, `dim_date` | Maintain store/department and date attributes through Type 1 upserts |
+| History | `walmart_sales_history` | Capture changes to sales, store size, and weekly features using a dbt check-strategy snapshot |
+| Fact | `fact_sales` | Expose current and historical versions with effective-period and audit timestamps |
+| Serving | `obt_walmart_sales` | Combine current fact versions with dimension attributes for downstream analysis |
+
+`dim_store` uses a composite store/department key, while `dim_date` uses `date_id`. Both preserve their insertion timestamps during normal incremental runs.
+
+The sales snapshot implements Type 2 history at the store, department, and week grain. When a tracked value changes, the existing version receives an end timestamp and remains in the history table, and a new version is inserted. `fact_sales` exposes these periods through `vrsn_start_date` and `vrsn_end_date`. A NULL end date identifies the current version.
+
+`obt_walmart_sales` selects current fact versions and joins the store dimension on both store and department, preserving one row per store, department, and week.
+
+## Analysis
+
+Python connects to Snowflake using the Snowflake Connector for Python and retrieves the modeled sales data. Matplotlib visualizations examine weekly trends and compare sales across stores and departments.
+
+## Project Documentation
+
+- [Modeling and validation](docs/solution.md)
+- [Snowflake setup and raw loading](sql/01_load_raw.sql)
+- [Verification queries](sql/02_verify_results.sql)
+- [Analysis Notebook](notebooks/walmart_sales_data_analysis.ipynb)
