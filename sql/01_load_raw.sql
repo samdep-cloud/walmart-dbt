@@ -26,7 +26,7 @@ CREATE OR REPLACE STORAGE INTEGRATION s3_walmart_int
 DESC INTEGRATION s3_walmart_int;
 
 
--- CSV source format, including missing-value handling
+-- CSV source format, includes missing-value handling
 
 CREATE OR REPLACE FILE FORMAT walmart.raw.walmart_csv_ff
     TYPE = CSV
@@ -45,7 +45,6 @@ CREATE OR REPLACE STAGE walmart.raw.raw_stage
 LIST @walmart.raw.raw_stage;
 
 -- Define Schemas:
-
 -- department.csv: weekly sales by store, department, and date
 
 CREATE OR REPLACE TABLE walmart.raw.department (
@@ -56,7 +55,6 @@ CREATE OR REPLACE TABLE walmart.raw.department (
     isholiday    BOOLEAN
 ) COMMENT = 'Source department.csv: weekly sales by store, department, and date';
 
-
 -- stores.csv: store attributes
 
 CREATE OR REPLACE TABLE walmart.raw.stores (
@@ -64,7 +62,6 @@ CREATE OR REPLACE TABLE walmart.raw.stores (
     type  VARCHAR,
     size  INT
 ) COMMENT = 'Source stores.csv: store type and size';
-
 
 -- fact.csv: weekly conditions by store and date, e.g. temperature, fuel price, etc.
 

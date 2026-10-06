@@ -10,7 +10,7 @@ SELECT 'fact', COUNT(*)
 FROM walmart.raw.fact;
 
 
--- Duplicate source keys: each query should return no rows
+-- Duplicate source key checks
 
 SELECT store, dept, date, COUNT(*) AS row_count
 FROM walmart.raw.department
@@ -28,7 +28,7 @@ GROUP BY store, date
 HAVING COUNT(*) > 1;
 
 
--- Duplicate dimension keys: each query should return no rows
+-- Duplicate dimension keys checks
 
 SELECT date_id, COUNT(*) AS row_count
 FROM walmart.dbt_sdepalma.dim_date
@@ -41,8 +41,7 @@ GROUP BY store_id, dept_id
 HAVING COUNT(*) > 1;
 
 
--- Exactly one current fact version per business key
--- Expected behavior: no results returned
+-- One current fact version per business key
 
 SELECT
     store_id,
@@ -54,7 +53,7 @@ GROUP BY store_id, dept_id, date_id
 HAVING COUNT_IF(vrsn_end_date IS NULL) <> 1;
 
 
--- Invalid version periods: should return no rows
+-- Invalid version period checks
 
 SELECT *
 FROM walmart.dbt_sdepalma.fact_sales
@@ -65,7 +64,7 @@ WHERE vrsn_start_date IS NULL
    );
 
 
--- Fact references without matching dimensions: should return no rows
+-- Fact references without matching dimensions
 
 SELECT
     fact.store_id,
@@ -95,7 +94,7 @@ SELECT
     ) AS obt_rows;
 
 
--- Duplicate OBT keys: should return no rows
+-- Duplicate OBT keys check
 
 SELECT store_id, dept_id, sales_date, COUNT(*) AS row_count
 FROM walmart.dbt_sdepalma.obt_walmart_sales
@@ -103,8 +102,7 @@ GROUP BY store_id, dept_id, sales_date
 HAVING COUNT(*) > 1;
 
 
--- Controlled SCD Type 2 demonstration
--- Original -> changed -> restored original
+-- Controlled SCD Type 2 demonstration - altering sales figure to ensure versioning works as expected
 
 SELECT
     store_id,
@@ -122,7 +120,6 @@ WHERE store_id = 1
 ORDER BY vrsn_start_date;
 
 
--- After restoration and an unchanged rerun:
 -- expected total_versions = 3, current_versions = 1
 
 SELECT

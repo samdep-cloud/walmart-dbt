@@ -1,6 +1,6 @@
 # Walmart: BI Analysis
 
-This project models sales data in Snowflake using dbt and supports analysis in Python. CSV source files are staged in Amazon S3 and loaded into Snowflake, where dbt builds Type 1 dimensions, a sales fact with Type 2 history, and a current-version analytical table. Python retrieves the modeled data through the Snowflake Connector for Python, and matplotlib visualizations examine sales trends across stores, departments, and time. 
+This project models Walmart weekly sales data in Snowflake using dbt and analyzes the results with Python and matplotlib. CSV source files are staged in Amazon S3 and loaded into Snowflake, where dbt builds Type 1 date and store/department dimensions, captures Type 2 sales history through a snapshot, and produces fact and current-version analytical tables. Python retrieves the modeled data through the Snowflake Connector for Python, and matplotlib visualizations examine sales trends across stores, departments, and time. 
 
 ## Data Flow
 
@@ -18,17 +18,17 @@ The ingestion SQL defines the storage integration, external stage, file format, 
 
 | Layer | Models | Purpose |
 |---|---|---|
-| Staging | `stg_walmart__sales`, `stg_walmart__stores`, `stg_walmart__features` | Standardize source field names |
-| Dimensions | `dim_store`, `dim_date` | Maintain store/department and date attributes through Type 1 upserts |
-| History | `walmart_sales_history` | Capture changes to sales, store size, and weekly features using a dbt check-strategy snapshot |
-| Fact | `fact_sales` | Expose current and historical versions with effective-period and audit timestamps |
-| Serving | `obt_walmart_sales` | Combine current fact versions with dimension attributes for downstream analysis |
+| Staging | `stg_walmart__sales`, `stg_walmart__stores`, `stg_walmart__features` | Standardizes source field names |
+| Dimensions | `dim_store`, `dim_date` | Maintains store/department and date attributes through Type 1 upserts |
+| History | `walmart_sales_history` | Captures changes to sales, store size, and weekly features using a dbt check-strategy snapshot |
+| Fact | `fact_sales` | Exposes current and historical versions with version start/end dates and insertion/update timestamps. |
+| Serving | `obt_walmart_sales` | Combines current fact versions with dimension attributes for downstream analysis |
 
-`dim_store` uses a composite store/department key, while `dim_date` uses `date_id`. Both preserve their insertion timestamps during normal incremental runs.
+`dim_store` uses a composite store/department key, while `dim_date` uses `date_id`. Both preserve their insertion timestamps during normal incremental runs, while the updated time stamp reflects the latest processing run.
 
-The sales snapshot implements Type 2 history at the store, department, and week grain. When a tracked value changes, the existing version receives an end timestamp and remains in the history table, and a new version is inserted. `fact_sales` exposes these periods through `vrsn_start_date` and `vrsn_end_date`. A NULL end date identifies the current version.
+The sales snapshot implements Type 2 history at the store, department, and week grain. When a tracked value changes, the existing version receives an end timestamp and remains in the history table, and a new version is inserted. `fact_sales` exposes these periods through `vrsn_start_date` and `vrsn_end_date`. A `NULL` end date identifies the current version.
 
-`obt_walmart_sales` selects current fact versions and joins the store dimension on both store and department, preserving one row per store, department, and week.
+`obt_walmart_sales` selects only current fact versions and joins the store dimension on both store and department, preserving one row per store, department, and week.
 
 ## Analysis
 

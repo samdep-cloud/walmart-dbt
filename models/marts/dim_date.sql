@@ -6,7 +6,7 @@
 }}
 
 with all_dates as (
-    -- dates live in both the department (renamed: sales) and fact (renamed: features) tables - union and dedupe
+    -- dates live in both the department (renamed: sales) and fact (renamed: features) tables - unioned and deduped
     select sales_date   as calendar_date, is_holiday from {{ ref('stg_walmart__sales') }}
     union all
     select record_date as calendar_date, is_holiday from {{ ref('stg_walmart__features') }}
